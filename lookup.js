@@ -9,6 +9,9 @@ let contextList = [];
 let messages = [];
 let messageListByModule = {};
 
+let tsFileIsDownloaded = false;
+let languagesListIsDownloaded = false;
+
 function downloadTsFile() {
 	const xhr = new XMLHttpRequest();
 
@@ -58,6 +61,7 @@ function downloadTsFile() {
 		// console.log(messages);
 		udpateModuleListGui();
 		// console.log("Done");
+		tsFileIsDownloaded = true;
 	}
 
 	xhr.open('GET', API_URL);
@@ -185,6 +189,7 @@ function getLanguageList() {
 		}
 		const languageList = document.getElementById('languageList');
 		languageList.innerHTML = languages;
+		languagesListIsDownloaded = true;
 	}
 
 	xhr.open('GET', WEBLATE_STATISTICS_URL);
@@ -202,6 +207,15 @@ function updateTranslationUrl() {
 	searchString();
 }
 
+function hideLoader() {
+	if (tsFileIsDownloaded && languagesListIsDownloaded) {
+		loaderBox.hidden = true;
+	}
+	else {
+		setTimeout(hideLoader, 500);
+	}
+}
+
 window.onload = function () {
 	getLanguageList();
 	downloadTsFile();
@@ -211,4 +225,7 @@ window.onload = function () {
 	form.onsubmit = function () {
 		return false;
 	};
+
+	// Hide the loader as soon as all resources are downloaded
+	hideLoader();
 }
