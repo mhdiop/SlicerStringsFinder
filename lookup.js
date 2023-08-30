@@ -96,8 +96,7 @@ function getModuleName(filename) {
 }
 
 function udpateModuleListGui() {
-	let moduleNames = '<option value="none">Choose a module name</option>';
-	moduleNames    += '<option value="all">All modules</option>';
+	let moduleNames = '<option value="all">All modules</option>';
 
 	const moduleList = Object.keys(messageListByModule).sort()
 
@@ -117,11 +116,6 @@ function onModuleFieldChanged() {
 	searchField.value = ''; // clear the search field
 	searchField.focus();
 
-	if (moduleField.value == 'all' || moduleField.value == 'none') {
-		stringTable.hidden = true;
-		return;
-	}
-
 	searchString(); // update the showed strings by making a new search
 }
 
@@ -131,13 +125,15 @@ function searchString() {
 	const searchedString = searchField.value.toLowerCase();
 	const moduleName = moduleField.value;
 
+	if (moduleName == 'all' && searchedString == '') {
+		stringTable.hidden = true;
+		return;
+	}
+
 	const foundMessages = [];
 	let messageList = messages;
 
-	if (moduleName == 'none') {
-		moduleField.selectedIndex = 1; // select "all module" as the choice
-	}
-	else if (moduleName != 'all') { // if a given module is chosen
+	if (moduleName != 'all') { // if a given module is chosen
 		messageList = messageListByModule[moduleName]
 	}
 

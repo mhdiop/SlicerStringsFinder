@@ -24,7 +24,7 @@
 			<hr>
 			<label for="searchField">Search for a given string</label>
 			<input id="searchField" type="text" oninput="searchString()" placeholder="e.g. welcome">
-			<input type="checkbox" id="hideTranslatedCheckbox" onchange="searchString()"><label for="hideTranslatedCheckbox">Hide translated strings</label>
+			<input type="checkbox" id="hideTranslatedCheckbox" onchange="searchString()" title="Hide already translated strings from the result"><label for="hideTranslatedCheckbox" title="Hide already translated strings from the result">Hide translated strings</label>
 		</fieldset>
 	</form>
 	<table id="stringTable" class="styled-table" hidden>
