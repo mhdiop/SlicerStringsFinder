@@ -24,6 +24,7 @@
 			<hr>
 			<label for="searchField">Search for a given string</label>
 			<input id="searchField" type="text" oninput="searchString()" placeholder="e.g. welcome">
+			<input type="checkbox" id="hideTranslatedCheckbox" onchange="searchString()"><label for="hideTranslatedCheckbox">Hide translated strings</label>
 		</fieldset>
 	</form>
 	<table id="stringTable" class="styled-table" hidden>
@@ -31,6 +32,7 @@
 			<tr>
 				<th>3D Slicer Module Name</th>
 				<th>String to translate</th>
+				<th>Translated</th>
 				<th>Weblate Translation Key</th>
 				<th>Weblate link</th>
 			</tr>

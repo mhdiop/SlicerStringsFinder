@@ -19,15 +19,22 @@ function downloadTsFile() {
 		const xmlDoc = xhr.responseXML;
 		let locations = xmlDoc.getElementsByTagName('location');
 
-		let filename, message, contextName, contextIndex;
+		let filename, message, contextName, contextIndex, isTranslated;
 
 		for (const location of locations) {
 			filename = location.getAttribute('filename');
 			// if (filename.indexOf('Modules/Loadable/') != -1 || filename.indexOf('Modules/Scripted/') != -1) {
 
 			message = location.parentElement;
+			translationTag = message.getElementsByTagName('translation')[0];
+
+			// ignore vanished text (obsolete strings)
+			if (translationTag.getAttribute('type') == 'vanished') continue;
+
+			isTranslated = (!translationTag.innerHTML || translationTag.hasAttribute('type')) ? false : true;
 			contextName = message.parentElement.firstElementChild.innerHTML;
-			messageText = message.getElementsByTagName('source')[0].innerHTML
+			messageText = message.getElementsByTagName('source')[0].innerHTML;
+
 
 			contextIndex = contextList.indexOf(contextName);
 
@@ -41,7 +48,8 @@ function downloadTsFile() {
 				'line': location.getAttribute('line'),
 				'text': messageText,
 				'module': getModuleName(filename),
-				'context': contextIndex
+				'context': contextIndex,
+				'translated': isTranslated
 			};
 
 			messages.push(newMessage);
@@ -134,6 +142,7 @@ function searchString() {
 	}
 
 	for (const message of messageList) {
+		if (message.translated && hideTranslatedCheckbox.checked) continue;
 		if (message.text.toLowerCase().indexOf(searchedString) != -1) {
 			foundMessages.push(message);
 		}
@@ -157,9 +166,10 @@ function showFoundStringsOnGui(foundMessages) {
 		messageText = (message.text.indexOf('&') == -1) ? message.text : htmlDecode(message.text);
 
 		stringListHTML += `
-			<tr>
+			<tr${message.translated ? ' class="translated"':''}>
 				<td>${message.module}</td>
 				<td>${message.text}</td>
+				<td>${message.translated ? 'Yes' : 'No'}</td>
 				<td>${contextList[message.context]}</td>
 				<td>
 					<a href="${WEBLATE_SEARCH_URL}${encodeURIComponent(contextList[message.context] + ' "' + messageText + '"')}" target="_blank">Open on weblate</a>

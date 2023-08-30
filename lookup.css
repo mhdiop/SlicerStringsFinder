@@ -48,11 +48,13 @@ table{
 }
 .styled-table tbody tr:hover {
     /* font-weight: bold; */
-    color: #009879;
+    color: #b41328;
     cursor: context-menu;
 }
-a
-{
+.styled-table tbody tr.translated:hover {
+    color: #009879;
+}
+a {
     color: #009879;
 }
 a:hover
