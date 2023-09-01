@@ -121,7 +121,7 @@ function getMessageFromModuleList(searchedMessage) {
 }
 
 function udpateModuleListGui() {
-	let moduleNames = '<option value="all">All modules</option>';
+	let moduleNames = `<option value="all">All modules [${messageListByLanguage[userLanguage].length}]</option>`;
 
 	const moduleList = Object.keys(messageListByModule).sort()
 
@@ -152,6 +152,7 @@ function searchString() {
 
 	if (moduleName == 'all' && searchedString == '' && !hideTranslatedCheckbox.checked) {
 		stringTable.hidden = true;
+		foundStringBox.hidden = true;
 		return;
 	}
 
@@ -175,6 +176,9 @@ function searchString() {
 
 function showFoundStringsOnGui(foundMessages) {
 	const contentArea = document.querySelector('#stringTable tbody');
+
+	foundStringBox.hidden = false;
+	foundStringBox.innerHTML = `Found strings : ${foundMessages.length}`;
 
 	if (foundMessages.length == 0) {
 		stringTable.hidden = true;
