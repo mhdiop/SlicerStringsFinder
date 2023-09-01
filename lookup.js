@@ -28,8 +28,8 @@ function downloadTsFile() {
 			message = location.parentElement;
 			translationTag = message.getElementsByTagName('translation')[0];
 
-			// ignore vanished text (obsolete strings)
-			if (translationTag.getAttribute('type') == 'vanished') continue;
+			// ignore vanished and obsolete strings
+			if (['vanished', 'obsolete'].includes(translationTag.getAttribute('type'))) continue;
 
 			isTranslated = (!translationTag.innerHTML || translationTag.hasAttribute('type')) ? false : true;
 			contextName = message.parentElement.firstElementChild.innerHTML;
@@ -165,7 +165,7 @@ function showFoundStringsOnGui(foundMessages) {
 			<tr${message.translated ? ' class="translated"':''}>
 				<td>${message.module}</td>
 				<td>${message.text}</td>
-				<td>${message.translated ? 'Yes' : 'No'}</td>
+				<td>${message.translated ? '✅' : '❌'}</td>
 				<td>${contextList[message.context]}</td>
 				<td>
 					<a href="${WEBLATE_SEARCH_URL}${encodeURIComponent(contextList[message.context] + ' "' + messageText + '"')}" target="_blank">Open on weblate</a>
