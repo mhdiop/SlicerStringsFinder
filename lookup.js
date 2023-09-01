@@ -1,4 +1,4 @@
-const API_URL = 'https://challengehub.sn/get_ts_file.php';
+const TS_FILE_DOWNLOAD_URL = 'https://challengehub.sn/get_ts_file.php';
 // const API_URL = 'http://localhost/slicer-tools/lookup-table-full/get_ts_file.php';
 let WEBLATE_SEARCH_URL = 'https://hosted.weblate.org/translate/3d-slicer/3d-slicer/fr/?q=';
 // const WEBLATE_STATISTICS_URL = 'https://hosted.weblate.org/api/components/3d-slicer/3d-slicer/statistics/?format=json';
@@ -6,19 +6,28 @@ const WEBLATE_STATISTICS_URL = 'https://challengehub.sn/get-weblate-statistics.p
 // const WEBLATE_STATISTICS_URL = 'http://localhost/slicer-tools/lookup-table-full/get-weblate-statistics.php';
 
 let contextList = [];
-let messages = [];
+const messageListByLanguage = {};
 let messageListByModule = {};
+
+let userLanguage = 'fr'; // default user language
 
 let tsFileIsDownloaded = false;
 let languagesListIsDownloaded = false;
 
 function downloadTsFile() {
+	// if the language's TS file is already downloaded, we reuse the cached one
+	if (messageListByLanguage.hasOwnProperty(userLanguage)) {
+		tsFileIsDownloaded = true;
+		return;
+	}
+
 	const xhr = new XMLHttpRequest();
 
 	xhr.onload = function () {
 		const xmlDoc = xhr.responseXML;
 		let locations = xmlDoc.getElementsByTagName('location');
 
+		messageListByLanguage[userLanguage] = [];
 		let filename, message, contextName, contextIndex, isTranslated;
 
 		for (const location of locations) {
@@ -52,7 +61,7 @@ function downloadTsFile() {
 				'translated': isTranslated
 			};
 
-			messages.push(newMessage);
+			messageListByLanguage[userLanguage].push(newMessage);
 
 			if (messageListByModule.hasOwnProperty(newMessage.module)) {
 				messageListByModule[newMessage.module].push(newMessage);
@@ -63,16 +72,14 @@ function downloadTsFile() {
 			// }
 		};
 
-		// console.log(contextList.length + " contexts detected\n\n");
-		// console.log(contextList);
-		// console.log('\n\n' + messages.length + " messages detected\n\n");
-		// console.log(messages);
-		udpateModuleListGui();
-		// console.log("Done");
+		// the module list is updated only at first download
+		if (!moduleField.innerHTML) {
+			udpateModuleListGui();
+		}
 		tsFileIsDownloaded = true;
 	}
 
-	xhr.open('GET', API_URL);
+	xhr.open('GET', `${TS_FILE_DOWNLOAD_URL}?lang=${userLanguage}`);
 	xhr.send();
 }
 
@@ -109,7 +116,7 @@ function udpateModuleListGui() {
 	searchedModuleName.innerHTML = moduleNames;
 }
 
-function onModuleFieldChanged() {
+function onModuleNameChanged() {
 	const moduleField = document.getElementById('moduleField');
 	const searchField = document.getElementById('searchField');
 
@@ -131,7 +138,8 @@ function searchString() {
 	}
 
 	const foundMessages = [];
-	let messageList = messages;
+	// let messageList = messages;
+	let messageList = messageListByLanguage[userLanguage];
 
 	if (moduleName != 'all') { // if a given module is chosen
 		messageList = messageListByModule[moduleName]
@@ -191,7 +199,7 @@ function getLanguageList() {
 		const statitics = JSON.parse(xhr.responseText);
 
 		for (const result of statitics.results) {
-			languages += `<option value="${result.code}" ${result.code == 'fr' ? 'selected' : ''}>${result.name}</option>`
+			languages += `<option value="${result.code}" ${result.code == userLanguage ? 'selected' : ''}>${result.name}</option>`
 		}
 		const languageList = document.getElementById('languageList');
 		languageList.innerHTML = languages;
@@ -204,21 +212,32 @@ function getLanguageList() {
 
 let previousLanguage = 'fr';
 
-function updateTranslationUrl() {
+function onUserLanguageChanged() {
 	const languageList = document.getElementById('languageList');
-	const currentLanguage = languageList.value;
+	userLanguage = languageList.value;
 
-	WEBLATE_SEARCH_URL = WEBLATE_SEARCH_URL.replace(`/${previousLanguage}/`, `/${currentLanguage}/`);
-	previousLanguage = currentLanguage;
-	searchString();
+	// update search URL to the new language
+	WEBLATE_SEARCH_URL = WEBLATE_SEARCH_URL.replace(`/${previousLanguage}/`, `/${userLanguage}/`);
+	previousLanguage = userLanguage;
+
+	// download the language specific TS file
+	tsFileIsDownloaded = false;
+	loaderBox.hidden = false;
+	downloadTsFile();
+
+	// hide the loader and update the result table with a new search
+	hideLoader(searchString);
 }
 
-function hideLoader() {
+function hideLoader(callback) {
 	if (tsFileIsDownloaded && languagesListIsDownloaded) {
 		loaderBox.hidden = true;
+		if (callback) {
+			callback();
+		}
 	}
 	else {
-		setTimeout(hideLoader, 500);
+		setTimeout(hideLoader, 500, callback);
 	}
 }
 
