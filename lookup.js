@@ -125,7 +125,7 @@ function searchString() {
 	const searchedString = searchField.value.toLowerCase();
 	const moduleName = moduleField.value;
 
-	if (moduleName == 'all' && searchedString == '') {
+	if (moduleName == 'all' && searchedString == '' && !hideTranslatedCheckbox.checked) {
 		stringTable.hidden = true;
 		return;
 	}
