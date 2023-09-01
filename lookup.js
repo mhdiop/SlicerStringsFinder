@@ -28,7 +28,7 @@ function downloadTsFile() {
 		let locations = xmlDoc.getElementsByTagName('location');
 
 		messageListByLanguage[userLanguage] = [];
-		let filename, message, contextName, contextIndex, isTranslated;
+		let filename, message, storedMessage, contextName, contextIndex, isTranslated;
 
 		for (const location of locations) {
 			filename = location.getAttribute('filename');
@@ -58,13 +58,20 @@ function downloadTsFile() {
 				'text': messageText,
 				'module': getModuleName(filename),
 				'context': contextIndex,
-				'translated': isTranslated
+				'translated': {}
 			};
+			newMessage.translated[userLanguage] = isTranslated;
 
 			messageListByLanguage[userLanguage].push(newMessage);
 
 			if (messageListByModule.hasOwnProperty(newMessage.module)) {
-				messageListByModule[newMessage.module].push(newMessage);
+				storedMessage = getMessageFromModuleList(newMessage);
+				if (storedMessage) {
+					storedMessage.translated[userLanguage] = isTranslated;
+				}
+				else {
+					messageListByModule[newMessage.module].push(newMessage);
+				}
 			}
 			else {
 				messageListByModule[newMessage.module] = [newMessage];
@@ -100,6 +107,17 @@ function getModuleName(filename) {
 	}
 
 	return moduleName;
+}
+
+function getMessageFromModuleList(searchedMessage) {
+	for (const message of messageListByModule[searchedMessage.module]) {
+		if (message.context == searchedMessage.context && message.text == searchedMessage.text
+			&& message.line == searchedMessage.line && message.location == searchedMessage.location) {
+			return message;
+		}
+	}
+
+	return null;
 }
 
 function udpateModuleListGui() {
@@ -146,7 +164,7 @@ function searchString() {
 	}
 
 	for (const message of messageList) {
-		if (message.translated && hideTranslatedCheckbox.checked) continue;
+		if (message.translated[userLanguage] && hideTranslatedCheckbox.checked) continue;
 		if (message.text.toLowerCase().indexOf(searchedString) != -1) {
 			foundMessages.push(message);
 		}
@@ -170,10 +188,10 @@ function showFoundStringsOnGui(foundMessages) {
 		messageText = (message.text.indexOf('&') == -1) ? message.text : htmlDecode(message.text);
 
 		stringListHTML += `
-			<tr${message.translated ? ' class="translated"':''}>
+			<tr${message.translated[userLanguage] ? ' class="translated"':''}>
 				<td>${message.module}</td>
 				<td>${message.text}</td>
-				<td>${message.translated ? '✅' : '❌'}</td>
+				<td>${message.translated[userLanguage] ? '✅' : '❌'}</td>
 				<td>${contextList[message.context]}</td>
 				<td>
 					<a href="${WEBLATE_SEARCH_URL}${encodeURIComponent(contextList[message.context] + ' "' + messageText + '"')}" target="_blank">Open on weblate</a>
