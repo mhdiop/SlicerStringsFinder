@@ -8,11 +8,13 @@ const WEBLATE_STATISTICS_URL = 'https://challengehub.sn/get-weblate-statistics.p
 let contextList = [];
 const messageListByLanguage = {};
 let messageListByModule = {};
+const stringList = []; // store english strings (are the same for all languages)
 
 let userLanguage = 'fr'; // default user language
 
 let tsFileIsDownloaded = false;
 let languagesListIsDownloaded = false;
+let englishStringsAreAlreadyScanned = false; // to know whether or not
 
 function downloadTsFile() {
 	// if the language's TS file is already downloaded, we reuse the cached one
@@ -30,6 +32,7 @@ function downloadTsFile() {
 		messageListByLanguage[userLanguage] = [];
 		let filename, message, storedMessage, contextName, contextIndex, isTranslated;
 
+		let textIndex = 0;
 		for (const location of locations) {
 			filename = location.getAttribute('filename');
 			// if (filename.indexOf('Modules/Loadable/') != -1 || filename.indexOf('Modules/Scripted/') != -1) {
@@ -44,6 +47,10 @@ function downloadTsFile() {
 			contextName = message.parentElement.firstElementChild.innerHTML;
 			messageText = message.getElementsByTagName('source')[0].innerHTML;
 
+			if (!englishStringsAreAlreadyScanned) {
+				stringList.push(messageText);
+			}
+
 
 			contextIndex = contextList.indexOf(contextName);
 
@@ -55,7 +62,7 @@ function downloadTsFile() {
 			newMessage = {
 				'location': filename,
 				'line': location.getAttribute('line'),
-				'text': messageText,
+				'text': textIndex++,
 				'module': getModuleName(filename),
 				'context': contextIndex,
 				'translated': {}
@@ -84,6 +91,9 @@ function downloadTsFile() {
 			udpateModuleListGui();
 		}
 		tsFileIsDownloaded = true;
+		if (!englishStringsAreAlreadyScanned) {
+			englishStringsAreAlreadyScanned = true;
+		}
 	}
 
 	xhr.open('GET', `${TS_FILE_DOWNLOAD_URL}?lang=${userLanguage}`);
@@ -166,7 +176,7 @@ function searchString() {
 
 	for (const message of messageList) {
 		if (message.translated[userLanguage] && hideTranslatedCheckbox.checked) continue;
-		if (message.text.toLowerCase().indexOf(searchedString) != -1) {
+		if (stringList[message.text].toLowerCase().indexOf(searchedString) != -1) {
 			foundMessages.push(message);
 		}
 	}
@@ -189,12 +199,13 @@ function showFoundStringsOnGui(foundMessages) {
 
 	for (const message of foundMessages) {
 		// HTML entities are decoded before URI component encoding so that to avoid URL crash
-		messageText = (message.text.indexOf('&') == -1) ? message.text : htmlDecode(message.text);
+		messageText = stringList[message.text];
+		messageText = (messageText.indexOf('&') == -1) ? messageText : htmlDecode(messageText);
 
 		stringListHTML += `
 			<tr${message.translated[userLanguage] ? ' class="translated"':''}>
 				<td>${message.module}</td>
-				<td>${message.text}</td>
+				<td>${stringList[message.text]}</td>
 				<td>${message.translated[userLanguage] ? '✅' : '❌'}</td>
 				<td>${contextList[message.context]}</td>
 				<td>
