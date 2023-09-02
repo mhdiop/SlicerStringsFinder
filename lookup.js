@@ -9,6 +9,7 @@ let contextList = [];
 const messageListByLanguage = {};
 let messageListByModule = {};
 const stringList = []; // store english strings (are the same for all languages)
+const translatedStrings = {}; // store translated strings for each language)
 
 let userLanguage = 'fr'; // default user language
 
@@ -30,6 +31,7 @@ function downloadTsFile() {
 		let locations = xmlDoc.getElementsByTagName('location');
 
 		messageListByLanguage[userLanguage] = [];
+		translatedStrings[userLanguage] = [];
 		let filename, message, storedMessage, contextName, contextIndex, isTranslated;
 
 		let textIndex = 0;
@@ -43,6 +45,7 @@ function downloadTsFile() {
 			// ignore vanished and obsolete strings
 			if (['vanished', 'obsolete'].includes(translationTag.getAttribute('type'))) continue;
 
+			translatedStrings[userLanguage].push(translationTag.innerHTML);
 			isTranslated = (!translationTag.innerHTML || translationTag.hasAttribute('type')) ? false : true;
 			contextName = message.parentElement.firstElementChild.innerHTML;
 			messageText = message.getElementsByTagName('source')[0].innerHTML;
@@ -176,7 +179,8 @@ function searchString() {
 
 	for (const message of messageList) {
 		if (message.translated[userLanguage] && hideTranslatedCheckbox.checked) continue;
-		if (stringList[message.text].toLowerCase().indexOf(searchedString) != -1) {
+		if (stringList[message.text].toLowerCase().indexOf(searchedString) != -1
+			|| translatedStrings[userLanguage][message.text].toLowerCase().indexOf(searchedString) != -1) {
 			foundMessages.push(message);
 		}
 	}

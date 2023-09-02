@@ -21,8 +21,11 @@
 			<select id="moduleField" onchange="onModuleNameChanged()"></select>
 			<hr>
 			<label for="searchField">Search for a given string</label>
-			<input id="searchField" type="text" oninput="searchString()" placeholder="e.g. welcome">
-			<input type="checkbox" id="hideTranslatedCheckbox" onchange="searchString()" title="Hide already translated strings from the result"><label for="hideTranslatedCheckbox" title="Hide already translated strings from the result">Hide translated strings</label>
+			<input id="searchField" type="text" oninput="searchString()" placeholder="e.g. welcome or bienvenue"
+				title="Search by the english or the translated version of a string">
+			<input type="checkbox" id="hideTranslatedCheckbox" onchange="searchString()"
+				title="Hide already translated strings from the result">
+			<label for="hideTranslatedCheckbox" title="Hide already translated strings from the result">Hide translated strings</label>
 		</fieldset>
 	</form>
 	<p id="foundStringBox" hidden></p>
