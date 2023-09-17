@@ -68,6 +68,38 @@ class StringsFinder
         }
     }
 
+    getText(index) {
+        return this.stringList[index];
+    }
+
+    getContext(index) {
+        return this.contextList[index];
+    }
+
+    // Returns the weblate search text of the given message
+    getSearchText(message) {
+        const messageText = this.getText(message.text);
+        const messageContext = this.getContext(message.context);
+
+        // replace potential HTML entities by their equivalent characters
+        let searchText = messageText.includes('&') ? StringsFinder.htmlDecode(messageText) : messageText;
+
+        if (!searchText.includes(' ') || !searchText.includes(':')) {
+            searchText = `key:=${messageContext} AND source:="${searchText}"`;
+        }
+        else {
+            searchText = `${messageContext} "${searchText}"`;
+        }
+
+        return searchText;
+    }
+
+    // returns the input with HTML entities replaced by their equivalent characters
+    static htmlDecode(html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        return doc.documentElement.textContent;
+    }
+
     downloadTsFile(language='fr')
     {
         this.setLanguage(language);
@@ -244,7 +276,6 @@ class StringsFinderManager
     }
 
     addLanguage(language) {
-        let index;
         this.defaultLanguage = language;
         for (const component of this.components) {
             component.downloadTsFile(this.defaultLanguage);
@@ -283,18 +314,15 @@ class StringsFinderManager
         return this.messageListByModule;
     }
 
-    getMessageList() {
-        if (!this.messageListByLanguage) {
-            this.messageListByLanguage = {};
+    getMessageCount() {
+        let messageCount = 0;
+        for (const component of this.components) {
+            // if a translation exist for the component in the chosen language
+            if (component.messageListByLanguage[this.defaultLanguage] !== undefined) {
+                messageCount += component.messageListByLanguage[this.defaultLanguage].length;
+            }
         }
-        const language = this.components[0].language;
-        if (this.messageListByLanguage[language]) {
-            return this.messageListByLanguage[language];
-        }
-        else {
-            this.messageListByLanguage[language] = [];
-
-        }
+        return messageCount;
     }
 
     getStringsFinderInstance(moduleName) {
@@ -400,8 +428,8 @@ class StringsFinderView
 
     generateModuleList() {
         const messageListByModule = this.finderManager.getModulesList();
-        let moduleNames = `<option value="all">All modules</option>`;
-        // let moduleNames = `<option value="all">All modules [${messageListByLanguage[userLanguage].length}]</option>`;
+        const messageCount = this.finderManager.getMessageCount();
+        let moduleNames = `<option value="all">All modules [${messageCount}]</option>`;
 
         const previousModule = this.moduleField.value;
         const moduleList = Object.keys(messageListByModule).sort();
@@ -484,35 +512,31 @@ class StringsFinderView
     }
 
     generateResultItem(foundMessages) {
-        let codeHtml = '', messageText;
         const finder = foundMessages.pop();
+        let codeHtml = '', messageText, searchText, searchByKeyText, contextString;
 
         for (const message of foundMessages) {
-            // HTML entities are decoded before URI component encoding so that to avoid URL crash
-            messageText = finder.stringList[message.text];
-            messageText = messageText.includes('&') ? this.htmlDecode(messageText) : messageText;
+            messageText = finder.getText(message.text);
+            contextString = finder.getContext(message.context);
+            searchText = encodeURIComponent(finder.getSearchText(message));
+            searchByKeyText = encodeURIComponent(`key:=${contextString}`);
 
             codeHtml += `
                 <tr${message.translated[finder.language] ? ' class="translated"' : ''}>
                     <td>${message.module}</td>
-                    <td>${finder.stringList[message.text]}</td>
+                    <td>${messageText}</td>
                     <td>${message.translated[finder.language] ? '✅' : '❌'}</td>
                     <td>
-                        <a href="${finder.weblateSearchUrl}${encodeURIComponent('key:=' + finder.contextList[message.context])}" target="_blank">${finder.contextList[message.context]}</a>
+                        <a href="${finder.weblateSearchUrl + searchByKeyText}" target="_blank">${contextString}</a>
                     </td>
                     <td>
-                        <a href="${finder.weblateSearchUrl}${encodeURIComponent(finder.contextList[message.context] + ' "' + messageText + '"')}" target="_blank">Open on weblate</a>
+                        <a href="${finder.weblateSearchUrl + searchText}" target="_blank">Open in weblate</a>
                     </td>
                 </tr>
             `;
         }
 
         return codeHtml;
-    }
-
-    htmlDecode(input) {
-        var doc = new DOMParser().parseFromString(input, "text/html");
-        return doc.documentElement.textContent;
     }
 }
 
