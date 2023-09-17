@@ -83,12 +83,21 @@ class StringsFinder
 
         // replace potential HTML entities by their equivalent characters
         let searchText = messageText.includes('&') ? StringsFinder.htmlDecode(messageText) : messageText;
+        const trimedSearchText = searchText.trim();
 
         if (!searchText.includes(' ') || !searchText.includes(':')) {
-            searchText = `key:=${messageContext} AND source:="${searchText}"`;
+            if (trimedSearchText == searchText) {
+                // exact match search
+                searchText = `key:=${messageContext} AND source:="${searchText}"`;
+            }
+            else {
+                // partial match search
+                searchText = `key:=${messageContext} AND source:"${trimedSearchText}"`;
+            }
         }
         else {
-            searchText = `${messageContext} "${searchText}"`;
+            // more generic search
+            searchText = `${messageContext} "${trimedSearchText}"`;
         }
 
         return searchText;
@@ -527,10 +536,14 @@ class StringsFinderView
                     <td>${messageText}</td>
                     <td>${message.translated[finder.language] ? '✅' : '❌'}</td>
                     <td>
-                        <a href="${finder.weblateSearchUrl + searchByKeyText}" target="_blank">${contextString}</a>
+                        <a href="${finder.weblateSearchUrl + searchByKeyText}" target="_blank"  title="Search this key in Weblate">
+                            ${contextString}
+                        </a>
                     </td>
                     <td>
-                        <a href="${finder.weblateSearchUrl + searchText}" target="_blank">Open in weblate</a>
+                        <a href="${finder.weblateSearchUrl + searchText}" target="_blank">
+                            <img src="open-in-weblate.png" title="Translate this string on Weblate.">
+                        </a>
                     </td>
                 </tr>
             `;
